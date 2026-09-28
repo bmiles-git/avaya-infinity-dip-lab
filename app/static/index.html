@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Avaya Infinity Data Dip Lab</title>
+  <style>
+    :root { color-scheme: light dark; --ink:#12202b; --muted:#5b6b76; --line:#d7e0e6; --bg:#f4f7f9; --card:#fff; --accent:#0b6e6b; }
+    @media (prefers-color-scheme: dark) {
+      :root { --ink:#e8f0f4; --muted:#9aadb8; --line:#2a3b46; --bg:#0e171d; --card:#152028; --accent:#4fd1c5; }
+    }
+    body { font-family: "Segoe UI", system-ui, sans-serif; margin:0; background:var(--bg); color:var(--ink); }
+    header { padding:28px 32px 12px; }
+    h1 { margin:0 0 6px; font-size:28px; }
+    p { color:var(--muted); }
+    main { padding:0 32px 48px; display:grid; gap:20px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; }
+    label { display:block; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-bottom:6px; }
+    input, select, button { font:inherit; }
+    input, select { width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:transparent; color:inherit; }
+    button { margin-top:12px; background:var(--accent); color:#fff; border:0; border-radius:8px; padding:10px 14px; cursor:pointer; }
+    pre { overflow:auto; background:rgba(0,0,0,.06); padding:14px; border-radius:10px; font-size:13px; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th, td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); }
+    code { background:rgba(0,0,0,.06); padding:1px 5px; border-radius:4px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Avaya Infinity Data Dip Lab</h1>
+    <p>50 customers, 50 patients, 50 vendors. Use this service from an Infinity workflow HTTP module.</p>
+  </header>
+  <main>
+    <section class="grid">
+      <div class="card">
+        <strong>Customer phones</strong>
+        <p>+15035551001 to +15035551050<br>IDs CUST-0001 … CUST-0050</p>
+      </div>
+      <div class="card">
+        <strong>Patient phones</strong>
+        <p>+15035552001 to +15035552050<br>MRNs MRN800001 … MRN800050</p>
+      </div>
+      <div class="card">
+        <strong>Vendor phones</strong>
+        <p>+15035553001 to +15035553050<br>Codes V2001 … V2050</p>
+      </div>
+    </section>
+    <section class="card">
+      <form id="dip-form">
+        <div class="grid">
+          <div>
+            <label>Entity</label>
+            <select name="entity">
+              <option value="auto">auto</option>
+              <option value="customer">customer</option>
+              <option value="patient">patient</option>
+              <option value="vendor">vendor</option>
+            </select>
+          </div>
+          <div>
+            <label>Phone / ANI</label>
+            <input name="phone" placeholder="+15035551001" />
+          </div>
+          <div>
+            <label>ID / account / MRN / vendor code</label>
+            <input name="key" placeholder="CUST-0001 or ACC-100001 or MRN800001" />
+          </div>
+        </div>
+        <button type="submit">Run data dip</button>
+      </form>
+      <pre id="out">Results appear here.</pre>
+    </section>
+    <section class="card">
+      <h3>Infinity workflow mapping</h3>
+      <p>HTTP module: <code>GET /api/v1/dip?entity=customer&phone={{ani}}</code></p>
+      <p>Map <code>found</code>, <code>display_name</code>, <code>record.tier</code>, <code>record.status</code>, <code>record.balance_usd</code> into workflow variables.</p>
+    </section>
+    <section class="card">
+      <h3>Sample catalog</h3>
+      <div id="catalog">Loading…</div>
+    </section>
+  </main>
+  <script>
+    const out = document.getElementById("out");
+    document.getElementById("dip-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const entity = fd.get("entity");
+      const phone = fd.get("phone");
+      const key = (fd.get("key") || "").trim();
+      const body = { entity };
+      if (phone) body.phone = phone;
+      if (key) {
+        if (key.startsWith("CUST")) body.customer_id = key;
+        else if (key.startsWith("ACC")) body.account_number = key;
+        else if (key.startsWith("PAT")) body.patient_id = key;
+        else if (key.startsWith("MRN")) body.mrn = key;
+        else if (key.startsWith("VND")) body.vendor_id = key;
+        else if (key.startsWith("V")) body.vendor_code = key;
+        else body.account_number = key;
+      }
+      const res = await fetch("/api/v1/dip", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(body)
+      });
+      out.textContent = JSON.stringify(await res.json(), null, 2);
+    });
+    fetch("/api/v1/catalog").then(r => r.json()).then(data => {
+      const rows = Object.entries(data.examples).map(([k,v]) =>
+        `<tr><td>${k}</td><td>${v.phone}</td><td>${v.customer_id || v.patient_id || v.vendor_id}</td><td>${v.account_number || v.mrn || v.vendor_code}</td></tr>`
+      ).join("");
+      document.getElementById("catalog").innerHTML =
+        `<p>${data.phone_plan.customers}<br>${data.phone_plan.patients}<br>${data.phone_plan.vendors}</p>
+         <table><thead><tr><th>Type</th><th>Phone</th><th>ID</th><th>Key</th></tr></thead><tbody>${rows}</tbody></table>`;
+    });
+  </script>
+</body>
+</html>
