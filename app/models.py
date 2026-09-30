@@ -24,6 +24,7 @@ class Customer(Base):
     city: Mapped[str] = mapped_column(String(64))
     state: Mapped[str] = mapped_column(String(8))
     vip: Mapped[bool] = mapped_column(Boolean)
+    pin: Mapped[str] = mapped_column(String(4), index=True)
 
 
 class Patient(Base):
@@ -44,6 +45,7 @@ class Patient(Base):
     next_appointment: Mapped[str] = mapped_column(String(32))
     allergy_flag: Mapped[bool] = mapped_column(Boolean)
     high_priority: Mapped[bool] = mapped_column(Boolean)
+    pin: Mapped[str] = mapped_column(String(4), index=True)
 
 
 class Vendor(Base):
@@ -62,3 +64,4 @@ class Vendor(Base):
     payment_terms: Mapped[str] = mapped_column(String(16))
     outstanding_po: Mapped[str | None] = mapped_column(String(32), nullable=True)
     credit_limit_usd: Mapped[int] = mapped_column(Integer)
+    pin: Mapped[str] = mapped_column(String(4), index=True)
