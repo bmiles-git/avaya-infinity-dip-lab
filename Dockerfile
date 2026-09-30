@@ -2,6 +2,7 @@ FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
     APP_HOME=/app \
     DATA_DIR=/app/data \
     API_PORT=8080
@@ -9,7 +10,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
+    && apt-get install -y --no-install-recommends -o Dpkg::Options::="--force-confdef" curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
