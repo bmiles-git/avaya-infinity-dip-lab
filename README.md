@@ -9,26 +9,40 @@ Test database container for Avaya Infinity workflow data dips.
 
 Repo: https://github.com/bmiles-git/avaya-infinity-dip-lab
 
+The public IP is not hardcoded. Use whatever address the cloud host assigns. Optionally set `PUBLIC_BASE_URL` in `.env`.
+
 ```bash
 git clone https://github.com/bmiles-git/avaya-infinity-dip-lab.git
 cd avaya-infinity-dip-lab
+cp .env.example .env
 docker compose up -d --build
 ```
 
-## URLs
-
-- Dip tester: http://localhost:8080/
-- Admin: http://localhost:8080/admin
-- Docs: http://localhost:8080/docs
-- Health: http://localhost:8080/health
-
-Default admin login: `admin` / `ChangeMe!2026`
-
-Change it before exposing the host:
+## .env
 
 ```bash
-ADMIN_USER=admin ADMIN_PASSWORD='your-strong-password' SESSION_SECRET='long-random-string' docker compose up -d --build
+HOST_PORT=8080
+ADMIN_USER=admin
+ADMIN_PASSWORD=ChangeMe!2026
+SESSION_SECRET=long-random-string
+# Leave blank to follow the host on each request.
+# Or set the current cloud URL, for example:
+# PUBLIC_BASE_URL=http://203.0.113.10:8080
+PUBLIC_BASE_URL=
 ```
+
+`/health` and `/api/v1/catalog` return `public_base_url` so Infinity examples always match the host you actually opened.
+
+## URLs
+
+Replace `HOST` with localhost or the current cloud IP/DNS.
+
+- Dip tester: `http://HOST:8080/`
+- Admin: `http://HOST:8080/admin`
+- Docs: `http://HOST:8080/docs`
+- Health: `http://HOST:8080/health`
+
+Default admin login: `admin` / `ChangeMe!2026`
 
 ## Phone and PIN plan
 
@@ -45,22 +59,23 @@ Example: Ava Bennett is +15035551001 with PIN 1001.
 ANI lookup:
 
 ```
-GET http://YOUR_HOST:8080/api/v1/dip?entity=customer&phone={{ani}}
+GET {PUBLIC_BASE_URL}/api/v1/dip?entity=customer&phone={{ani}}
 ```
 
 PIN check after the IVR collects 4 digits:
 
 ```
-GET http://YOUR_HOST:8080/api/v1/verify?entity=customer&phone={{ani}}&pin={{pin}}
+GET {PUBLIC_BASE_URL}/api/v1/verify?entity=customer&phone={{ani}}&pin={{pin}}
 ```
 
 Use `found` and `pin_ok` to branch.
 
-## Deploy on Linode
+## Deploy on a cloud Docker host
 
 1. Clone this repo on the instance.
-2. Open TCP 8080 in the Linode Cloud Firewall (and ufw if used).
-3. Run:
+2. Open TCP 8080 in the provider firewall (and ufw if used).
+3. Optional: put the instance URL in `.env` as `PUBLIC_BASE_URL`.
+4. Run:
 
 ```bash
 cd avaya-infinity-dip-lab
