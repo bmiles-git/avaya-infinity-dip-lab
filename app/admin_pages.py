@@ -22,4 +22,5 @@ ENTITY_MODELS = {
 def _render(name: str, **repl) -> HTMLResponse:
     html = (STATIC_DIR / name).read_text(encoding="utf-8")
     for key, value in repl.items():
-        html = html.replace("{{' + key + '}}".replace("'", ""), value) if False else html.replace("{{' + key + '}}", value)
+        html = html.replace("{{' + key + '}}".replace("{{'", "{{").replace("' + key + '}}", "}}"), value)
+    return HTMLResponse(html)
