@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin - Dip Lab</title>
+  <style>
+    body { font-family: Segoe UI, system-ui, sans-serif; margin: 24px; }
+    input, select, button { font: inherit; padding: 8px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 16px; }
+    th, td { border-bottom: 1px solid #ccc; text-align: left; padding: 8px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+  </style>
+</head>
+<body>
+  <p><a href="/">Dip tester</a> | <a href="/admin/logout">Sign out</a></p>
+  <h1>Test account admin</h1>
+  <form id="search-form" class="row">
+    <select name="entity">
+      <option value="all">all</option>
+      <option value="customer">customer</option>
+      <option value="patient">patient</option>
+      <option value="vendor">vendor</option>
+    </select>
+    <input name="q" placeholder="name, phone, ID, PIN" />
+    <button type="submit">Search</button>
+  </form>
+  <div id="results"></div>
+  <section id="editor" hidden>
+    <h2 id="editor-title">Record</h2>
+    <p id="save-msg"></p>
+    <form id="edit-form" class="grid"></form>
+    <p><button type="submit" form="edit-form">Save changes</button></p>
+  </section>
+  <script>
+    const results = document.getElementById("results");
+    const editor = document.getElementById("editor");
+    const form = document.getElementById("edit-form");
+    let current = null;
+    document.getElementById("search-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const res = await fetch("/admin/api/search?entity=" + fd.get("entity") + "&q=" + encodeURIComponent(fd.get("q") || ""));
+      if (res.status === 401) { location.href = "/admin/login"; return; }
+      const data = await res.json();
+      results.innerHTML = "<table><thead><tr><th>Type</th><th>ID</th><th>Name</th><th>Phone</th><th>PIN</th><th></th></tr></thead><tbody>" +
+        data.records.map(r => "<tr><td>" + r.entity + "</td><td>" + r.id + "</td><td>" + r.name + "</td><td>" + (r.phone||"") + "</td><td>" + (r.pin||"") + "</td><td><button type='button' data-entity='" + r.entity + "' data-id='" + r.id + "'>Open</button></td></tr>").join("") +
+        "</tbody></table>";
+      results.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => openRecord(btn.dataset.entity, btn.dataset.id)));
+    });
+    async function openRecord(entity, id) {
+      const res = await fetch("/admin/api/" + entity + "/" + encodeURIComponent(id));
+      if (res.status === 401) { location.href = "/admin/login"; return; }
+      const data = await res.json();
+      current = data;
+      document.getElementById("editor-title").textContent = data.entity + " " + data.id;
+      editor.hidden = false;
+      form.innerHTML = Object.keys(data.record).map(key => {
+        const val = data.record[key] ?? "";
+        if (typeof val === "boolean") return "<label><input type='checkbox' name='" + key + "' " + (val ? "checked" : "") + "/> " + key + "</label>";
+        return "<label>" + key + "<br><input name='" + key + "' value='" + String(val).replaceAll("\"","&quot;") + "'" + (key==="pin" ? " maxlength='4'" : "") + "/></label>";
+      }).join("");
+    }
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!current) return;
+      const payload = {};
+      for (const el of form.elements) {
+        if (!el.name) continue;
+        payload[el.name] = el.type === "checkbox" ? el.checked : el.value;
+      }
+      const res = await fetch("/admin/api/" + current.entity + "/" + encodeURIComponent(current.id), {
+        method: "PUT",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      document.getElementById("save-msg").textContent = res.ok ? "Saved." : (data.detail || "Save failed");
+      if (res.ok) current = data;
+    });
+  </script>
+</body>
+</html>
