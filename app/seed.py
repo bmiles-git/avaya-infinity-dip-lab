@@ -68,6 +68,7 @@ def customers() -> list[dict]:
                 "city": city,
                 "state": state,
                 "vip": i % 10 == 0,
+                "pin": f"{1000 + i:04d}",
             }
         )
     return rows
@@ -95,6 +96,7 @@ def patients() -> list[dict]:
                 "next_appointment": f"2026-10-{((i % 27) + 1):02d}T{9 + (i % 8):02d}:00:00",
                 "allergy_flag": i % 6 == 0,
                 "high_priority": i % 11 == 0,
+                "pin": f"{2000 + i:04d}",
             }
         )
     return rows
@@ -118,6 +120,7 @@ def vendors() -> list[dict]:
                 "payment_terms": "Net 30" if i % 2 else "Net 45",
                 "outstanding_po": f"PO-2026-{i:04d}" if i % 3 == 0 else None,
                 "credit_limit_usd": 10000 + (i * 500),
+                "pin": f"{3000 + i:04d}",
             }
         )
     return rows

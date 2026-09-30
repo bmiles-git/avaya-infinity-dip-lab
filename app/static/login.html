@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin login — Dip Lab</title>
+  <style>
+    :root { color-scheme: light dark; --ink:#12202b; --muted:#5b6b76; --line:#d7e0e6; --bg:#f4f7f9; --card:#fff; --accent:#0b6e6b; --bad:#9b2c2c; }
+    @media (prefers-color-scheme: dark) {
+      :root { --ink:#e8f0f4; --muted:#9aadb8; --line:#2a3b46; --bg:#0e171d; --card:#152028; --accent:#4fd1c5; --bad:#feb2b2; }
+    }
+    body { font-family: "Segoe UI", system-ui, sans-serif; margin:0; background:var(--bg); color:var(--ink); min-height:100vh; display:grid; place-items:center; }
+    .card { width:min(420px, 92vw); background:var(--card); border:1px solid var(--line); border-radius:16px; padding:28px; }
+    h1 { margin:0 0 8px; font-size:24px; }
+    p { color:var(--muted); }
+    label { display:block; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:14px 0 6px; }
+    input { width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:transparent; color:inherit; font:inherit; }
+    button { margin-top:18px; width:100%; background:var(--accent); color:#fff; border:0; border-radius:8px; padding:12px; font:inherit; cursor:pointer; }
+    .err { color:var(--bad); min-height:1.2em; }
+  </style>
+</head>
+<body>
+  <form class="card" method="post" action="/admin/login">
+    <h1>Dip Lab admin</h1>
+    <p>Sign in to search and edit test customers, patients, and vendors.</p>
+    <p class="err">{{error}}</p>
+    <input type="hidden" name="next" value="{{next}}" />
+    <label>Username</label>
+    <input name="username" autocomplete="username" required />
+    <label>Password</label>
+    <input name="password" type="password" autocomplete="current-password" required />
+    <button type="submit">Sign in</button>
+  </form>
+</body>
+</html>
