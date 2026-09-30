@@ -11,6 +11,9 @@ services:
     environment:
       API_KEY: ${API_KEY:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-ChangeMe!2026}
+      SESSION_SECRET: ${SESSION_SECRET:-dip-lab-change-this-session-secret}
     volumes:
       - dip-data:/app/data
     healthcheck:
